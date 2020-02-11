@@ -2,31 +2,66 @@
   "heroes": [
     {
       "id": 14,
-      "name": "Celeritas"
+      "name": "Celeritas",
+      "strength": 10,
+      "agility": 5,
+      "mana": 100
     },
     {
       "id": 15,
-      "name": "Magneta"
+      "name": "Magn",
+      "strength": 10,
+      "agility": 5,
+      "mana": 100
     },
     {
       "id": 16,
-      "name": "RubberMan"
+      "name": "RubberMan",
+      "strength": 10,
+      "agility": 5,
+      "mana": 100
     },
     {
       "id": 17,
-      "name": "Dynama"
+      "name": "Dynama",
+      "strength": 10,
+      "agility": 5,
+      "mana": 100
     },
     {
       "id": 18,
-      "name": "Dr IQ"
-    },
-    {
-      "id": 19,
-      "name": "Magma"
+      "name": "Dr IQ",
+      "strength": 10,
+      "agility": 5,
+      "mana": 100
     },
     {
       "id": 20,
-      "name": "Tornado"
+      "name": "Tornado",
+      "strength": 10,
+      "agility": 5,
+      "mana": 100
+    },
+    {
+      "name": "Dr Nice",
+      "strength": 3,
+      "agility": 2,
+      "mana": 250,
+      "id": 21
+    },
+    {
+      "name": "Magma",
+      "strength": 7,
+      "agility": 2,
+      "mana": 50,
+      "id": 22
+    },
+    {
+      "name": "mage123",
+      "strength": 3,
+      "agility": 2,
+      "mana": 250,
+      "id": 23
     }
   ]
 }

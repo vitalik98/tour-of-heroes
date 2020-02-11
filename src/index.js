@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {BrowserRouter as Router, Link, Route} from "react-router-dom";
+import {BrowserRouter as Router, Link, Route, Switch} from "react-router-dom";
 import axios from 'axios';
 import './index.css';
 
@@ -10,8 +10,20 @@ class Hero extends React.Component {
         this.state = {
             heroName: this.props.match.params.name,
             heroId: Number.parseInt(this.props.match.params.id),
+            hero: {}
         };
         this.handleChange = this.handleChange.bind(this);
+    }
+
+    getHero(heroId) {
+        axios.get(`http://localhost:3004/heroes/${heroId}`)
+            .then(res => this.setState({hero: res.data}))
+            .catch(err => console.log(err))
+            .then(() => console.log("GET hero with id ", heroId));
+    }
+
+    componentDidMount() {
+        this.getHero(this.state.heroId);
     }
 
     handleChange(event) {
@@ -19,6 +31,7 @@ class Hero extends React.Component {
     }
 
     updateHero(hero) {
+        hero.name = this.state.heroName;
         axios.put(`http://localhost:3004/heroes/${hero.id}`, hero)
             .then(res => console.log(res))
             .catch(err => console.log(err))
@@ -28,15 +41,26 @@ class Hero extends React.Component {
     render() {
         return (
             <div>
-                <h3>{this.state.heroName} Details</h3>
-                <div><span>id: </span>{this.state.heroId}</div>
-                <div>
-                    <label>name:
-                        <input placeholder="name" value={this.state.heroName} onChange={this.handleChange}/>
-                    </label>
-                </div>
+                <h3>{this.state.hero.name} Details</h3>
+                <div><span>id: </span>{this.state.hero.id}</div>
+                <ul className="detail">
+                    <li>
+                        <label>Name:
+                            <input placeholder="name" value={this.state.heroName} onChange={this.handleChange}/>
+                        </label>
+                    </li>
+                    <li>
+                        <label>Strength: {this.state.hero.strength}</label>
+                    </li>
+                    <li>
+                        <label>Agility: {this.state.hero.agility}</label>
+                    </li>
+                    <li>
+                        <label>Mana: {this.state.hero.mana}</label>
+                    </li>
+                </ul>
                 <Link to={''} onClick={() => {
-                    this.updateHero({"id": this.state.heroId, "name": this.state.heroName});
+                    this.updateHero(this.state.hero);
                     this.props.history.goBack()
                 }}>Save</Link>
                 <Link to={''} onClick={() => this.props.history.goBack()}>Back</Link>
@@ -81,12 +105,9 @@ class HeroesList extends React.Component {
         return (
             <div>
                 <h3>My Heroes</h3>
-                <div>
-                    <label>Hero name:
-                        <input type="text" value={this.state.newHero} onChange={this.handleChange}/>
-                    </label>
-                    <button onClick={() => this.addHero(this.state.newHero)}>Add</button>
-                </div>
+                <Link to={`/heroes/creation`}>
+                    Create Hero
+                </Link>
                 <ul className="heroes">
                     {this.state.heroes.map(hero => {
                         return (
@@ -120,15 +141,232 @@ class HeroesList extends React.Component {
                 this.getHeroes();
             });
     }
+}
 
-    addHero(newHero) {
-        axios.post(`http://localhost:3004/heroes`, {"name": newHero})
+class HeroCreation extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            statePoints: 10,
+            strength: 0,
+            agility: 0,
+            mana: 0,
+            heroName: ""
+        };
+        this.handleChange = this.handleChange.bind(this);
+    }
+
+    handleChange(event) {
+        this.setState({heroName: event.target.value});
+    }
+
+    isDisabled() {
+        return this.state.statePoints !== 0 || this.state.heroName === "";
+    }
+
+    createHero(hero) {
+        axios.post(`http://localhost:3004/heroes`, hero)
             .then(res => console.log(res))
             .catch(err => console.log(err))
             .then(() => {
                 console.log("POST new hero");
-                this.getHeroes();
             });
+    }
+
+    manageState(state, action) {
+        switch (action) {
+            case "add":
+                switch (state) {
+                    case "strength":
+                        this.setState({strength: this.state.strength + 1});
+                        this.setState({statePoints: this.state.statePoints - 1});
+                        break;
+                    case "agility":
+                        this.setState({agility: this.state.agility + 1});
+                        this.setState({statePoints: this.state.statePoints - 1});
+                        break;
+                    case "mana":
+                        this.setState({mana: this.state.mana + 50});
+                        this.setState({statePoints: this.state.statePoints - 1});
+                        break;
+                    default:
+                        console.log("state", state);
+                        break;
+                }
+                break;
+            case "subtract":
+                switch (state) {
+                    case "strength":
+                        this.setState({strength: this.state.strength - 1});
+                        this.setState({statePoints: this.state.statePoints + 1});
+                        break;
+                    case "agility":
+                        this.setState({agility: this.state.agility - 1});
+                        this.setState({statePoints: this.state.statePoints + 1});
+                        break;
+                    case "mana":
+                        this.setState({mana: this.state.mana - 50});
+                        this.setState({statePoints: this.state.statePoints + 1});
+                        break;
+                    default:
+                        console.log("state", state);
+                        break;
+                }
+                break;
+            default:
+                console.log("state", state);
+                break;
+        }
+    }
+
+    render() {
+        return (
+            <div>
+                <label>Hero name:
+                    <input type="text" value={this.state.heroName} onChange={this.handleChange}/>
+                </label>
+                <div>
+                    <span>Remaining state points: {this.state.statePoints}</span>
+                </div>
+                <ul className="creation">
+                    <li>
+                        <span>Strength: {this.state.strength}</span>
+                        {this.state.statePoints > 0 &&
+                        <button className="state" onClick={() => this.manageState("strength", "add")}>+</button>}
+                        {this.state.strength > 0 &&
+                        <button className="state" onClick={() => this.manageState("strength", "subtract")}>-</button>}
+                    </li>
+                    <li>
+                        <span>Agility: {this.state.agility}</span>
+                        {this.state.statePoints > 0 &&
+                        <button className="state" onClick={() => this.manageState("agility", "add")}>+</button>}
+                        {this.state.agility > 0 &&
+                        <button className="state" onClick={() => this.manageState("agility", "subtract")}>-</button>}
+                    </li>
+                    <li>
+                        <span>Mana: {this.state.mana}</span>
+                        {this.state.statePoints > 0 &&
+                        <button className="state" onClick={() => this.manageState("mana", "add")}>+</button>}
+                        {this.state.mana > 0 &&
+                        <button className="state" onClick={() => this.manageState("mana", "subtract")}>-</button>}
+                    </li>
+                </ul>
+                <button disabled={this.isDisabled()} onClick={() => {
+                    this.createHero(
+                        {
+                            "name": this.state.heroName,
+                            "strength": this.state.strength,
+                            "agility": this.state.agility,
+                            "mana": this.state.mana
+                        });
+                    this.props.history.goBack()
+                }}>
+                    Create Hero
+                </button>
+            </div>
+        );
+    }
+}
+
+class Arena extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            heroes: [],
+            firstHero: null,
+            secondHero: null,
+            firstHeroPicking: true
+        };
+    }
+
+    componentDidMount() {
+        this.getHeroes();
+    }
+
+    componentWillMount() {
+        this.getHeroes();
+    }
+
+    getHeroes() {
+        axios.get(`http://localhost:3004/heroes`)
+            .then(res => this.setState({heroes: res.data}))
+            .catch(err => console.log(err))
+            .then(() => console.log('GET request executed'));
+    }
+
+    onHeroSelect(hero) {
+        if (this.state.firstHeroPicking) {
+            this.setState({firstHero: hero});
+            this.setState({firstHeroPicking: !this.state.firstHeroPicking})
+        } else {
+            this.setState({secondHero: hero});
+            this.setState({firstHeroPicking: !this.state.firstHeroPicking})
+        }
+    }
+
+    isDisabled(hero) {
+        return hero === this.state.firstHero || hero === this.state.secondHero;
+    }
+
+    pickOrder() {
+        if (this.state.firstHeroPicking) {
+            if (this.state.firstHero) {
+                return (
+                    <label>Pick first Hero or Fight</label>
+                );
+            } else {
+                return (
+                    <label>Pick first Hero</label>
+                );
+            }
+        } else {
+            if (this.state.secondHero) {
+                return (
+                    <label>Pick second Hero or Fight</label>
+                );
+            } else {
+                return (
+                    <label>Pick second Hero</label>
+                );
+            }
+        }
+    }
+
+    //TODO fight
+    heroFight(firstHero, secondHero) {
+        let firstHeroHp = firstHero.strength * 100;
+        let secondHeroHp = secondHero.strength * 100;
+        let firstHeroAttackSpeed = firstHero.agility * 0.5;
+        let secondHeroAttackSpeed = secondHero.agility * 0.5;
+        let firstHeroDodgeChance = firstHero.agility*0.3;
+        let secondHeroDodgeChance = secondHero.agility*0.3;
+        while (firstHeroHp > 0 || secondHeroHp > 0) {
+            if (firstHero.agility > secondHero.agility) {
+
+            }
+        }
+    }
+
+    render() {
+        return (
+            <div className="heroes-search">
+                <div>
+                    {this.pickOrder()}<br/>
+                    <label>First hero: {this.state.firstHero && this.state.firstHero.name}</label><br/>
+                    <label>Second hero: {this.state.secondHero && this.state.secondHero.name}</label>
+                    <div className="grid grid-pad">
+                        {this.state.heroes.map((hero) =>
+                            <button key={hero.id} className="pick" disabled={this.isDisabled(hero)}
+                                    onClick={() => this.onHeroSelect(hero)}>
+                                <span className="badge">{hero.name}</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
     }
 }
 
@@ -148,6 +386,14 @@ class Dashboard extends React.Component {
     }
 
     componentDidMount() {
+        this.getHeroes();
+    }
+
+    componentWillMount() {
+        this.getHeroes();
+    }
+
+    getHeroes() {
         axios.get(`http://localhost:3004/heroes`)
             .then(res => this.setState({heroes: res.data}))
             .catch(err => console.log(err))
@@ -172,7 +418,7 @@ class Dashboard extends React.Component {
                 <div className="grid grid-pad">
                     {this.state.heroes.slice(1, 5).map(hero => {
                         return (
-                            <Link to={`/detail/${hero.id}/${hero.name}`}>
+                            <Link key={hero.id} to={`/detail/${hero.id}/${hero.name}`}>
                                 <div className="module hero">
                                     <h4>{hero.name}</h4>
                                 </div>
@@ -190,8 +436,7 @@ class Dashboard extends React.Component {
                                 <span className="badge">{hero.name}</span>
                             </Link>
                         </li>
-                    )
-                    }
+                    )}
                 </ul>
             </div>
         );
@@ -203,14 +448,17 @@ class App extends React.Component {
     render() {
         return (
             <Router>
-                <div>
-                    <h1>Tour of Heroes</h1>
-                    <Link to="/dashboard">Dashboard</Link>
-                    <Link to="/heroes">Heroes</Link>
+                <h1>Tour of Heroes</h1>
+                <Link to="/dashboard">Dashboard</Link>
+                <Link to="/heroes">Heroes</Link>
+                <Link to="/arena">Arena</Link>
+                <Switch>
+                    <Route path="/heroes/creation" component={HeroCreation}/>
                     <Route path="/heroes" component={HeroesList}/>
                     <Route path="/detail/:id/:name" component={Hero}/>
                     <Route path="/dashboard" component={Dashboard}/>
-                </div>
+                    <Route path="/arena" component={Arena}/>
+                </Switch>
             </Router>
         );
     }
